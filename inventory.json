@@ -1,0 +1,8 @@
+[
+  { "id": 1, "brand": "Samsung", "model": "Galaxy S23",    "available": true,  "stock": 12 },
+  { "id": 2, "brand": "Samsung", "model": "Galaxy A54",    "available": true,  "stock": 5  },
+  { "id": 3, "brand": "Apple",   "model": "iPhone 15",     "available": true,  "stock": 8  },
+  { "id": 4, "brand": "Apple",   "model": "iPhone 13",     "available": false, "stock": 0  },
+  { "id": 5, "brand": "Xiaomi",  "model": "Redmi Note 12", "available": true,  "stock": 20 },
+  { "id": 6, "brand": "OnePlus", "model": "OnePlus 11",    "available": false, "stock": 0  }
+]

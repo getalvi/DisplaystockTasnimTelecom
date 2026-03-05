@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Display Stock — Check Availability</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7c6aff;
+      --accent2: #ff6a9a;
+      --green: #22d97a;
+      --red: #ff4d6d;
+      --text: #eeeef5;
+      --muted: #7878a0;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,106,255,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(255,106,154,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 2rem 2rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .admin-link {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .admin-link:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Hero Section ── */
+    .hero {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 5rem 1.5rem 3rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(124,106,255,0.12);
+      border: 1px solid rgba(124,106,255,0.25);
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin-bottom: 1rem;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, var(--accent) 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Search Bar ── */
+    .search-wrap {
+      position: relative;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    #searchInput {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      appearance: none;
+    }
+
+    #searchInput::placeholder { color: var(--muted); }
+    #searchInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,106,255,0.15);
+    }
+
+    /* ── Results Area ── */
+    .results-section {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 2.5rem auto 4rem;
+      padding: 0 1.5rem;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .results-label {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .results-count {
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.7rem;
+      border-radius: 999px;
+    }
+
+    /* ── Cards Grid ── */
+    #resultsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ── Product Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+      animation: cardIn 0.35s ease both;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(124,106,255,0.3);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-brand {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+      font-weight: 500;
+    }
+
+    .card-model {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .card-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-key {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-available {
+      background: rgba(34,217,122,0.15);
+      color: var(--green);
+      border: 1px solid rgba(34,217,122,0.25);
+    }
+
+    .badge-unavailable {
+      background: rgba(255,77,109,0.12);
+      color: var(--red);
+      border: 1px solid rgba(255,77,109,0.2);
+    }
+
+    .stock-count {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    /* ── Empty / Loading States ── */
+    .state-box {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+      grid-column: 1 / -1;
+    }
+
+    .state-box .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .state-box p { font-size: 0.95rem; line-height: 1.6; }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 500px) {
+      h1 { font-size: 2rem; }
+      #resultsGrid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">📱 DisplayStock</div>
+    <a class="admin-link" href="admin.html">Admin →</a>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <span class="hero-tag">Real-Time Inventory</span>
+    <h1>Find Your <span>Display</span> in Seconds</h1>
+    <p class="subtitle">Search any mobile brand or model to instantly check screen availability and stock levels.</p>
+
+    <!-- Search Bar -->
+    <div class="search-wrap">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="e.g. Samsung Galaxy S23, iPhone 15..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="results-section" id="resultsSection" style="display:none">
+    <div class="results-header">
+      <span class="results-label">Search Results</span>
+      <span class="results-count" id="resultsCount">0 found</span>
+    </div>
+    <div id="resultsGrid"></div>
+  </section>
+
+  <!-- All Inventory (shown by default) -->
+  <section class="results-section" id="allSection">
+    <div class="results-header">
+      <span class="results-label">All Inventory</span>
+      <span class="results-count" id="allCount">Loading…</span>
+    </div>
+    <div id="allGrid"></div>
+  </section>
+
+  <footer>
+    &copy; 2025 DisplayStock &mdash; Inventory updates reflect admin changes in real-time.
+  </footer>
+
+  <script>
+    /*
+     * ─────────────────────────────────────────────
+     *  DATA SOURCE
+     *  Reads inventory from inventory.json (same folder).
+     *  Admin page writes to this JSON via GitHub API.
+     *  For local testing, falls back to localStorage data.
+     * ─────────────────────────────────────────────
+     */
+
+    const DATA_KEY = 'displaystock_inventory'; // localStorage fallback key
+
+    // Sample seed data (used if no JSON / localStorage exists)
+    const SEED_DATA = [
+      { id: 1, brand: "Samsung", model: "Galaxy S23", available: true,  stock: 12 },
+      { id: 2, brand: "Samsung", model: "Galaxy A54", available: true,  stock: 5  },
+      { id: 3, brand: "Apple",   model: "iPhone 15",  available: true,  stock: 8  },
+      { id: 4, brand: "Apple",   model: "iPhone 13",  available: false, stock: 0  },
+      { id: 5, brand: "Xiaomi",  model: "Redmi Note 12", available: true, stock: 20 },
+      { id: 6, brand: "OnePlus", model: "OnePlus 11", available: false, stock: 0  },
+    ];
+
+    let inventory = [];
+
+    /* Load inventory: tries inventory.json first, then localStorage, then seed */
+    async function loadInventory() {
+      try {
+        const res = await fetch('inventory.json?nocache=' + Date.now());
+        if (res.ok) {
+          inventory = await res.json();
+          return;
+        }
+      } catch (_) { /* file not found or network error */ }
+
+      // Fallback: localStorage (used in admin-only local mode)
+      const saved = localStorage.getItem(DATA_KEY);
+      inventory = saved ? JSON.parse(saved) : [...SEED_DATA];
+    }
+
+    /* Build a single card element */
+    function buildCard(item) {
+      const avail = item.available && item.stock > 0;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-brand">${escHtml(item.brand)}</div>
+        <div class="card-model">${escHtml(item.model)}</div>
+        <hr class="card-divider"/>
+        <div class="card-row">
+          <span class="card-key">Availability</span>
+          <span class="badge ${avail ? 'badge-available' : 'badge-unavailable'}">
+            ${avail ? '✓ Available' : '✗ Unavailable'}
+          </span>
+        </div>
+        <div class="card-row">
+          <span class="card-key">In Stock</span>
+          <span class="stock-count" style="color:${avail ? 'var(--green)' : 'var(--red)'}">
+            ${item.stock}
+          </span>
+        </div>`;
+      return card;
+    }
+
+    /* Render a list of items into a target grid element */
+    function renderGrid(items, gridEl, countEl) {
+      gridEl.innerHTML = '';
+      countEl.textContent = `${items.length} found`;
+
+      if (!items.length) {
+        gridEl.innerHTML = `
+          <div class="state-box">
+            <div class="icon">🔍</div>
+            <p>No matches found.<br/>Try a different brand or model name.</p>
+          </div>`;
+        return;
+      }
+
+      // Stagger card animations
+      items.forEach((item, i) => {
+        const card = buildCard(item);
+        card.style.animationDelay = `${i * 60}ms`;
+        gridEl.appendChild(card);
+      });
+    }
+
+    /* HTML escape helper */
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* Search handler — live filtering */
+    function handleSearch(query) {
+      const allSection   = document.getElementById('allSection');
+      const resultsSection = document.getElementById('resultsSection');
+      const resultsGrid  = document.getElementById('resultsGrid');
+      const resultsCount = document.getElementById('resultsCount');
+
+      if (!query.trim()) {
+        // Show all, hide results section
+        resultsSection.style.display = 'none';
+        allSection.style.display = '';
+        return;
+      }
+
+      // Hide "all" section, show filtered results
+      allSection.style.display = 'none';
+      resultsSection.style.display = '';
+
+      const q = query.toLowerCase();
+      const filtered = inventory.filter(item =>
+        item.brand.toLowerCase().includes(q) ||
+        item.model.toLowerCase().includes(q)
+      );
+
+      renderGrid(filtered, resultsGrid, resultsCount);
+    }
+
+    /* Init */
+    async function init() {
+      await loadInventory();
+
+      const allGrid  = document.getElementById('allGrid');
+      const allCount = document.getElementById('allCount');
+
+      if (!inventory.length) {
+        allGrid.innerHTML = `<div class="state-box"><div class="icon">📦</div><p>No inventory yet.<br/>The admin has not added any items.</p></div>`;
+        allCount.textContent = '0 items';
+      } else {
+        renderGrid(inventory, allGrid, allCount);
+      }
+
+      /* Live search on input */
+      document.getElementById('searchInput').addEventListener('input', e => {
+        handleSearch(e.target.value);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

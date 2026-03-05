@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — DisplayStock</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7c6aff;
+      --accent2: #ff6a9a;
+      --green: #22d97a;
+      --red: #ff4d6d;
+      --yellow: #ffd166;
+      --text: #eeeef5;
+      --muted: #7878a0;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 40% at 10% 10%, rgba(124,106,255,0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 90% 90%, rgba(255,106,154,0.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── LOGIN SCREEN ── */
+    #loginScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: var(--bg);
+    }
+
+    #loginScreen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 40%, rgba(124,106,255,0.14) 0%, transparent 60%);
+    }
+
+    .login-box {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .login-logo {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.4rem;
+    }
+
+    .login-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      letter-spacing: 0.04em;
+    }
+
+    .login-box h2 {
+      font-family: var(--font-head);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .field {
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .field input, .field select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+
+    .field select option { background: var(--surface); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, var(--accent), #5a4fcc);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      margin-top: 0.5rem;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    #loginError {
+      color: var(--red);
+      font-size: 0.82rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    /* ── ADMIN DASHBOARD ── */
+    #dashboard { display: none; position: relative; z-index: 10; }
+
+    /* Top Bar */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-logo {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+
+    .topbar-user {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .btn-sm:hover { border-color: var(--red); color: var(--red); }
+
+    /* Main Layout */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.2rem 1.4rem;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red   { color: var(--red); }
+    .stat-value.accent{ color: var(--accent); }
+
+    /* Section heading */
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .btn-add {
+      padding: 0.5rem 1.2rem;
+      background: linear-gradient(135deg, var(--accent), #5a4fcc);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-add:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* Table */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: rgba(124,106,255,0.07);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      text-align: left;
+      padding: 0.9rem 1.2rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+      font-family: var(--font-body);
+    }
+
+    td {
+      padding: 0.9rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.22rem 0.7rem;
+      border-radius: 999px;
+    }
+    .badge-available   { background: rgba(34,217,122,0.15); color: var(--green); border: 1px solid rgba(34,217,122,0.25); }
+    .badge-unavailable { background: rgba(255,77,109,0.12);  color: var(--red);   border: 1px solid rgba(255,77,109,0.2); }
+
+    .actions { display: flex; gap: 0.5rem; }
+
+    .btn-edit, .btn-del {
+      padding: 0.28rem 0.75rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: opacity 0.2s;
+    }
+    .btn-edit { background: rgba(124,106,255,0.15); color: var(--accent); }
+    .btn-del  { background: rgba(255,77,109,0.12);  color: var(--red); }
+    .btn-edit:hover, .btn-del:hover { opacity: 0.7; }
+
+    .empty-row td {
+      text-align: center;
+      color: var(--muted);
+      padding: 3rem;
+      font-size: 0.9rem;
+    }
+
+    /* ── MODAL ── */
+    #modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      backdrop-filter: blur(4px);
+    }
+
+    #modalOverlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 440px;
+      animation: modalIn 0.25s ease both;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-title {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: var(--font-head);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-cancel:hover { opacity: 0.75; }
+
+    .btn-save {
+      flex: 2;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, var(--accent), #5a4fcc);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.85; }
+
+    /* GitHub sync notice */
+    .sync-notice {
+      background: rgba(255,209,102,0.08);
+      border: 1px solid rgba(255,209,102,0.2);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.82rem;
+      color: var(--yellow);
+      line-height: 1.5;
+    }
+
+    .sync-notice strong { display: block; margin-bottom: 0.2rem; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem 1.2rem;
+      font-size: 0.88rem;
+      z-index: 300;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* GitHub export section */
+    .github-section {
+      margin-top: 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.5rem;
+    }
+
+    .github-section h3 {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .github-section p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .github-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    .btn-export {
+      padding: 0.6rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+    textarea#jsonPreview {
+      width: 100%;
+      height: 140px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-family: monospace;
+      font-size: 0.78rem;
+      padding: 0.75rem;
+      resize: vertical;
+      margin-top: 1rem;
+      outline: none;
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      th:nth-child(4), td:nth-child(4) { display: none; }
+      .topbar { padding: 0 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       LOGIN SCREEN
+  ════════════════════════════════════════════ -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-logo">📱 DisplayStock</div>
+      <div class="login-sub">Inventory Management System</div>
+      <h2>Admin Login</h2>
+
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="admin" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+      <div id="loginError">Incorrect username or password.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       DASHBOARD
+  ════════════════════════════════════════════ -->
+  <div id="dashboard">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-logo">📱 DisplayStock Admin</div>
+      <div class="topbar-right">
+        <span class="topbar-user" id="topbarUser"></span>
+        <a href="index.html" class="btn-sm" style="text-decoration:none">← Customer View</a>
+        <button class="btn-sm" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Models</div>
+          <div class="stat-value accent" id="statTotal">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Available</div>
+          <div class="stat-value green" id="statAvail">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Out of Stock</div>
+          <div class="stat-value red" id="statOut">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Units</div>
+          <div class="stat-value" id="statUnits">0</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="section-head">
+        <div class="section-title">Inventory</div>
+        <button class="btn-add" onclick="openModal()">+ Add Item</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Model Name</th>
+              <th>Availability</th>
+              <th>Stock</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+      </div>
+
+      <!-- GitHub Export Section -->
+      <div class="github-section">
+        <h3>🐙 GitHub Deployment</h3>
+        <p>
+          This system stores inventory in your browser's localStorage and exports a <code>inventory.json</code> file.
+          To deploy on GitHub Pages: commit <code>index.html</code>, <code>admin.html</code> and <code>inventory.json</code>
+          to your repository. Each time you update inventory, download the new JSON and commit it to keep the customer page live.
+        </p>
+        <div class="github-actions">
+          <button class="btn-export" onclick="showJSON()">View JSON</button>
+          <button class="btn-export" onclick="downloadJSON()">⬇ Download inventory.json</button>
+          <button class="btn-export" onclick="copyJSON()">Copy JSON</button>
+        </div>
+        <textarea id="jsonPreview" readonly></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL — Add / Edit Item
+  ════════════════════════════════════════════ -->
+  <div id="modalOverlay" onclick="overlayClose(event)">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle">Add New Item</div>
+
+      <div class="field">
+        <label>Mobile Brand</label>
+        <input type="text" id="fBrand" placeholder="e.g. Samsung"/>
+      </div>
+      <div class="field">
+        <label>Model Name</label>
+        <input type="text" id="fModel" placeholder="e.g. Galaxy S23"/>
+      </div>
+      <div class="field">
+        <label>Availability</label>
+        <select id="fAvail">
+          <option value="true">Available</option>
+          <option value="false">Not Available</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Number in Stock</label>
+        <input type="number" id="fStock" min="0" placeholder="0"/>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveItem()">Save Item</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    /*
+     * ─────────────────────────────────────────────────
+     *  ADMIN CREDENTIALS
+     *  Change these before deploying!
+     *  For production, use a proper auth backend.
+     *  For GitHub Pages (static), credentials are stored
+     *  client-side — use a strong unique password.
+     * ─────────────────────────────────────────────────
+     */
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = 'display@2025';   // ← CHANGE THIS
+
+    const DATA_KEY = 'displaystock_inventory';
+    const AUTH_KEY = 'displaystock_auth';
+
+    let inventory = [];
+    let editingId = null;
+    let nextId    = 1;
+
+    /* ── AUTH ── */
+    function doLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+
+      if (u === ADMIN_USER && p === ADMIN_PASS) {
+        sessionStorage.setItem(AUTH_KEY, '1');
+        showDashboard();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    // Allow Enter key to submit login
+    ['loginUser','loginPass'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') doLogin();
+      });
+    });
+
+    function doLogout() {
+      sessionStorage.removeItem(AUTH_KEY);
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('topbarUser').textContent = `👤 ${ADMIN_USER}`;
+      loadData();
+      render();
+    }
+
+    /* ── DATA ── */
+    function loadData() {
+      const saved = localStorage.getItem(DATA_KEY);
+      if (saved) {
+        inventory = JSON.parse(saved);
+        nextId = inventory.length ? Math.max(...inventory.map(i => i.id)) + 1 : 1;
+      } else {
+        // Seed with example data on first load
+        inventory = [
+          { id:1, brand:'Samsung', model:'Galaxy S23',       available:true,  stock:12 },
+          { id:2, brand:'Samsung', model:'Galaxy A54',       available:true,  stock:5  },
+          { id:3, brand:'Apple',   model:'iPhone 15',        available:true,  stock:8  },
+          { id:4, brand:'Apple',   model:'iPhone 13',        available:false, stock:0  },
+          { id:5, brand:'Xiaomi',  model:'Redmi Note 12',    available:true,  stock:20 },
+          { id:6, brand:'OnePlus', model:'OnePlus 11',       available:false, stock:0  },
+        ];
+        nextId = 7;
+        saveData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(DATA_KEY, JSON.stringify(inventory));
+    }
+
+    /* ── RENDER TABLE ── */
+    function render() {
+      const body = document.getElementById('inventoryBody');
+      body.innerHTML = '';
+
+      if (!inventory.length) {
+        body.innerHTML = `<tr class="empty-row"><td colspan="5">No items yet. Click "Add Item" to get started.</td></tr>`;
+      } else {
+        inventory.forEach(item => {
+          const avail = item.available && item.stock > 0;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-weight:500">${esc(item.brand)}</td>
+            <td>${esc(item.model)}</td>
+            <td>
+              <span class="badge ${avail ? 'badge-available' : 'badge-unavailable'}">
+                ${avail ? '✓ Available' : '✗ Unavailable'}
+              </span>
+            </td>
+            <td style="font-family:var(--font-head);font-weight:700;color:${avail?'var(--green)':'var(--red)'}">${item.stock}</td>
+            <td>
+              <div class="actions">
+                <button class="btn-edit" onclick="openModal(${item.id})">Edit</button>
+                <button class="btn-del"  onclick="deleteItem(${item.id})">Delete</button>
+              </div>
+            </td>`;
+          body.appendChild(tr);
+        });
+      }
+
+      // Update stats
+      const avail = inventory.filter(i => i.available && i.stock > 0).length;
+      document.getElementById('statTotal').textContent = inventory.length;
+      document.getElementById('statAvail').textContent = avail;
+      document.getElementById('statOut').textContent   = inventory.length - avail;
+      document.getElementById('statUnits').textContent = inventory.reduce((s,i) => s + Number(i.stock), 0);
+
+      // Refresh JSON preview if open
+      const ta = document.getElementById('jsonPreview');
+      if (ta.style.display !== 'none') ta.value = JSON.stringify(inventory, null, 2);
+    }
+
+    /* ── MODAL ── */
+    function openModal(id = null) {
+      editingId = id;
+      document.getElementById('modalTitle').textContent = id ? 'Edit Item' : 'Add New Item';
+
+      if (id) {
+        const item = inventory.find(i => i.id === id);
+        document.getElementById('fBrand').value = item.brand;
+        document.getElementById('fModel').value = item.model;
+        document.getElementById('fAvail').value = String(item.available);
+        document.getElementById('fStock').value = item.stock;
+      } else {
+        document.getElementById('fBrand').value = '';
+        document.getElementById('fModel').value = '';
+        document.getElementById('fAvail').value = 'true';
+        document.getElementById('fStock').value = '';
+      }
+
+      document.getElementById('modalOverlay').classList.add('open');
+      document.getElementById('fBrand').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      editingId = null;
+    }
+
+    function overlayClose(e) {
+      if (e.target === document.getElementById('modalOverlay')) closeModal();
+    }
+
+    function saveItem() {
+      const brand = document.getElementById('fBrand').value.trim();
+      const model = document.getElementById('fModel').value.trim();
+      const avail = document.getElementById('fAvail').value === 'true';
+      const stock = parseInt(document.getElementById('fStock').value) || 0;
+
+      if (!brand || !model) { alert('Please fill in Brand and Model Name.'); return; }
+
+      if (editingId) {
+        const item = inventory.find(i => i.id === editingId);
+        item.brand = brand; item.model = model;
+        item.available = avail; item.stock = stock;
+        toast('✓ Item updated');
+      } else {
+        inventory.push({ id: nextId++, brand, model, available: avail, stock });
+        toast('✓ Item added');
+      }
+
+      saveData();
+      render();
+      closeModal();
+    }
+
+    function deleteItem(id) {
+      if (!confirm('Delete this item?')) return;
+      inventory = inventory.filter(i => i.id !== id);
+      saveData();
+      render();
+      toast('Item deleted');
+    }
+
+    /* ── JSON EXPORT (for GitHub) ── */
+    function getJSON() { return JSON.stringify(inventory, null, 2); }
+
+    function showJSON() {
+      const ta = document.getElementById('jsonPreview');
+      ta.style.display = ta.style.display === 'none' ? 'block' : 'none';
+      ta.value = getJSON();
+    }
+
+    function downloadJSON() {
+      const blob = new Blob([getJSON()], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'inventory.json';
+      a.click();
+      toast('⬇ inventory.json downloaded');
+    }
+
+    function copyJSON() {
+      navigator.clipboard.writeText(getJSON()).then(() => toast('JSON copied to clipboard!'));
+    }
+
+    /* ── TOAST ── */
+    let toastTimer;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    /* ── HTML escape ── */
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* ── AUTO LOGIN CHECK ── */
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem(AUTH_KEY)) showDashboard();
+    });
+  </script>
+</body>
+</html>
