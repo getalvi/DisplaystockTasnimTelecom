@@ -377,33 +377,39 @@
      * ─────────────────────────────────────────────
      */
 
-    const DATA_KEY = 'displaystock_inventory'; // localStorage fallback key
-
-    // Sample seed data (used if no JSON / localStorage exists)
-    const SEED_DATA = [
-      { id: 1, brand: "Samsung", model: "Galaxy S23", available: true,  stock: 12 },
-      { id: 2, brand: "Samsung", model: "Galaxy A54", available: true,  stock: 5  },
-      { id: 3, brand: "Apple",   model: "iPhone 15",  available: true,  stock: 8  },
-      { id: 4, brand: "Apple",   model: "iPhone 13",  available: false, stock: 0  },
-      { id: 5, brand: "Xiaomi",  model: "Redmi Note 12", available: true, stock: 20 },
-      { id: 6, brand: "OnePlus", model: "OnePlus 11", available: false, stock: 0  },
-    ];
+    /*
+     * Fetches live inventory directly from GitHub API
+     * so customer page is always up-to-date with admin changes.
+     */
+    const GH_OWNER  = 'getalvi';
+    const GH_REPO   = 'DisplaystockTasnimTelecom';
+    const GH_FILE   = 'inventory.json';
+    const GH_BRANCH = 'main';
+    const GH_API_URL = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`;
 
     let inventory = [];
 
-    /* Load inventory: tries inventory.json first, then localStorage, then seed */
+    /* Load inventory directly from GitHub (no auth needed for public repo) */
     async function loadInventory() {
       try {
-        const res = await fetch('inventory.json?nocache=' + Date.now());
+        const res = await fetch(GH_API_URL + '&_=' + Date.now(), {
+          headers: { 'Accept': 'application/vnd.github+json' }
+        });
         if (res.ok) {
-          inventory = await res.json();
+          const data = await res.json();
+          const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+          inventory = JSON.parse(decoded);
           return;
         }
-      } catch (_) { /* file not found or network error */ }
+      } catch (_) { /* fall through to local fallback */ }
 
-      // Fallback: localStorage (used in admin-only local mode)
-      const saved = localStorage.getItem(DATA_KEY);
-      inventory = saved ? JSON.parse(saved) : [...SEED_DATA];
+      // Fallback: try local inventory.json (for local development)
+      try {
+        const res = await fetch('inventory.json?nocache=' + Date.now());
+        if (res.ok) { inventory = await res.json(); return; }
+      } catch (_) {}
+
+      inventory = [];
     }
 
     /* Build a single card element */
