@@ -34,4 +34,10 @@
     "available": true,
     "stock": 2
   }
+  "id": 7,
+    "brand": "sellbot",
+    "model": "x99",
+    "available": true,
+    "stock": 2
+  }
 ]
